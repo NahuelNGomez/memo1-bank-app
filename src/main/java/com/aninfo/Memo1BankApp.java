@@ -1,7 +1,10 @@
 package com.aninfo;
 
+import com.aninfo.exceptions.invalidIdTransaction;
 import com.aninfo.model.Account;
+import com.aninfo.model.Transaction;
 import com.aninfo.service.AccountService;
+import com.aninfo.service.TransactionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -11,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import springfox.documentation.builders.PathSelectors;
 import springfox.documentation.builders.RequestHandlerSelectors;
@@ -26,6 +30,8 @@ public class Memo1BankApp {
 
 	@Autowired
 	private AccountService accountService;
+	@Autowired
+	private TransactionService transactionService;
 
 	public static void main(String[] args) {
 		SpringApplication.run(Memo1BankApp.class, args);
@@ -73,6 +79,47 @@ public class Memo1BankApp {
 	@PutMapping("/accounts/{cbu}/deposit")
 	public Account deposit(@PathVariable Long cbu, @RequestParam Double sum) {
 		return accountService.deposit(cbu, sum);
+	}
+
+
+	 @PostMapping("/transactions")
+	 @ResponseStatus(HttpStatus.CREATED)
+	 public Transaction createTransaction(@RequestBody Transaction transaction) {
+
+		if(transaction.getType().equals("deposit")) {
+			accountService.deposit(transaction.getCbu(), transaction.getAmount());
+			return transactionService.deposit(transaction);
+		} else if (transaction.getType().equals("withdraw")) {
+			accountService.withdraw(transaction.getCbu(), transaction.getAmount());
+			return transactionService.withdraw(transaction);
+		}
+
+
+		 return transaction;
+	 }
+	 //Todas las transacciones de un CBU
+	 @GetMapping("/transactions/{cbu}")
+	 public List<Transaction> getTransactions(@PathVariable Long cbu) {
+		return transactionService.getTransactionsByCbu(cbu);
+
+	 }
+
+	// Devuelve una transaccion a partir del ID
+	@GetMapping("/transactions/{transactionID}")
+	public Transaction getTransaction(@PathVariable Long transactionID) {
+		return transactionService.findTransactionByID(transactionID);
+
+	}
+
+	// Elimina una transaccion
+	@DeleteMapping("/transactions/{transactionID}")
+	public void deleteTransaction(@PathVariable Long transactionID) {
+		Transaction transaction = transactionService.findTransactionByID(transactionID);
+
+		if (transaction == null) {
+			throw new invalidIdTransaction("Invalid ID of the transaction");
+		}
+		transactionService.deleteTransaction(transaction);
 	}
 
 	@Bean
