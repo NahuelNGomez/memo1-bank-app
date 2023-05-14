@@ -1,6 +1,8 @@
 package com.aninfo;
 
+import com.aninfo.exceptions.InsufficientFundsException;
 import com.aninfo.exceptions.invalidIdTransaction;
+import com.aninfo.exceptions.invalidTypeOfTransaction;
 import com.aninfo.model.Account;
 import com.aninfo.model.Transaction;
 import com.aninfo.service.AccountService;
@@ -83,9 +85,7 @@ public class Memo1BankApp {
 		Transaction transaction = new Transaction("deposit", sum, cbu);
 		accountService.deposit(cbu, transaction.getAmount());
 		return transactionService.deposit(transaction);
-
 	}
-
 
 	 @PostMapping("/transactions")
 	 @ResponseStatus(HttpStatus.CREATED)
@@ -99,24 +99,21 @@ public class Memo1BankApp {
 			return transactionService.withdraw(transaction);
 		}
 
+		throw new invalidTypeOfTransaction("Invalid type of transaction");
 
-		 return transaction;
 	 }
-	 //Todas las transacciones de un CBU
-	 @GetMapping("/transactions/{cbu}")
-	 public List<Transaction> getTransactions(@PathVariable Long cbu) {
+
+	 @GetMapping("/accounts/transactions")
+	 public List<Transaction> getTransactions(@RequestParam Long cbu) {
 		return transactionService.getTransactionsByCbu(cbu);
-
 	 }
 
-	// Devuelve una transaccion a partir del ID
 	@GetMapping("/transactions/{transactionID}")
 	public Transaction getTransaction(@PathVariable Long transactionID) {
 		return transactionService.findTransactionByID(transactionID);
 
 	}
 
-	// Elimina una transaccion
 	@DeleteMapping("/transactions/{transactionID}")
 	public void deleteTransaction(@PathVariable Long transactionID) {
 		Transaction transaction = transactionService.findTransactionByID(transactionID);
